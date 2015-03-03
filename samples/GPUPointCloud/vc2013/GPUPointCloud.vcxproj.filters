@@ -14,23 +14,26 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
     <Filter Include="Source Files\blocks">
-      <UniqueIdentifier>{164a21f0-6bad-4dac-8c5e-cebd29f2b7f1}</UniqueIdentifier>
+      <UniqueIdentifier>{693d9a58-6eef-4403-99b7-9577f1b10ccc}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\blocks\Cinder-DSAPI">
-      <UniqueIdentifier>{02b24679-de7c-4734-b69f-36fd0c4a8af9}</UniqueIdentifier>
+      <UniqueIdentifier>{507177d9-42b0-4a4d-90a0-0c15524fc80b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\shaders">
+      <UniqueIdentifier>{dc6c9cd1-541b-4574-9024-ef63e0befd08}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\BasicAppApp.cpp">
+    <ClCompile Include="..\src\GPUPointCloudApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\BasicAppApp.cpp">
+    <ClCompile Include="..\src\GPUPointCloudApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClInclude Include="..\include\Resources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\..\src\CiDSAPI.cpp">
+    <ClCompile Include="..\..\..\..\..\libs\CinderBlocks\blocks\Cinder-DSAPI\src\CiDSAPI.cpp">
       <Filter>Source Files\blocks\Cinder-DSAPI</Filter>
     </ClCompile>
   </ItemGroup>
@@ -38,7 +41,7 @@
     <ClInclude Include="..\include\Resources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\src\CiDSAPI.h">
+    <ClInclude Include="..\..\..\..\..\libs\CinderBlocks\blocks\Cinder-DSAPI\src\CiDSAPI.h">
       <Filter>Source Files\blocks\Cinder-DSAPI</Filter>
     </ClInclude>
   </ItemGroup>
@@ -46,5 +49,13 @@
     <ResourceCompile Include="Resources.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\assets\gpucloud_frag.glsl">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="..\assets\gpucloud_vert.glsl">
+      <Filter>Source Files\shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
