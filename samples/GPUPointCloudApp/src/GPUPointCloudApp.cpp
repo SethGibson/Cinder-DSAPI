@@ -19,8 +19,6 @@ using namespace ci::app;
 using namespace std;
 using namespace CinderDS;
 
-static ivec2 S_DIMS(480, 360);
-
 class GPUPointCloudApp : public AppNative
 {
 public:
@@ -56,6 +54,7 @@ private:
 	MayaCamUI mMayaCam;
 
 	CinderDSRef mCinderDS;
+	ivec2 mDepthDims;
 };
 
 void GPUPointCloudApp::setup()
@@ -66,8 +65,8 @@ void GPUPointCloudApp::setup()
 	mCamera.setCenterOfInterestPoint(vec3(0));
 	mMayaCam.setCurrentCam(mCamera);
 
-	setupMesh();
 	setupDSAPI();
+	setupMesh();
 
 	getSignalShutdown().connect(std::bind(&GPUPointCloudApp::stopDS, this));
 }
@@ -84,25 +83,25 @@ void GPUPointCloudApp::setupMesh()
 	}
 
 	vector<CloudPoint> cPoints;
-	for (int vy = 0; vy < S_DIMS.y; vy++)
+	for (int vy = 0; vy < mDepthDims.y; vy++)
 	{
-		for (int vx = 0; vx < S_DIMS.x; vx++)
+		for (int vx = 0; vx < mDepthDims.x; vx++)
 		{
-			float cy = lmap<float>(vy, 0, S_DIMS.y, 1.0f, -1.0f);
-			float cx = lmap<float>(vx, 0, S_DIMS.x, 1.3333f, -1.3333f);
+			float cy = lmap<float>(vy, 0, mDepthDims.y, 1.0f, -1.0f);
+			float cx = lmap<float>(vx, 0, mDepthDims.x, 1.3333f, -1.3333f);
 			float cz = 0.0;
 
-			cPoints.push_back(CloudPoint(vec3(cx, cy, cz), vec3(0, 0, 0), vec2(1.0 - vx / (float)S_DIMS.x, 1.0f - vy / (float)S_DIMS.y)));
+			cPoints.push_back(CloudPoint(vec3(cx, cy, cz), vec3(0, 0, 0), vec2(1.0 - vx / (float)mDepthDims.x, 1.0f - vy / (float)mDepthDims.y)));
 		}
 	}
 
 	//normals
 	int id = 1;
-	for (int vy = 0; vy < S_DIMS.y; vy++)
+	for (int vy = 0; vy < mDepthDims.y; vy++)
 	{
-		for (int vx = 0; vx < S_DIMS.x; vx++)
+		for (int vx = 0; vx < mDepthDims.x; vx++)
 		{
-			if (id < S_DIMS.x*S_DIMS.y - 1)
+			if (id < mDepthDims.x*mDepthDims.y - 1)
 			{
 				vec3 v1 = cPoints[id - 1].PPosition;
 				vec3 v2 = cPoints[id + 1].PPosition;
@@ -124,8 +123,8 @@ void GPUPointCloudApp::setupMesh()
 	mMeshObj = gl::VboMesh::create(cPoints.size(), GL_POINTS, { { mAttribObj, mBufferObj } });
 	mDrawObj = gl::Batch::create(mMeshObj, mShaderObj);
 
-	mTexDepth = gl::Texture2d::create(S_DIMS.x, S_DIMS.y);
-	mSurfDepth = Surface8u(S_DIMS.x, S_DIMS.y, false, SurfaceChannelOrder::RGB);
+	mTexDepth = gl::Texture2d::create(mDepthDims.x, mDepthDims.y);
+	mSurfDepth = Surface8u(mDepthDims.x, mDepthDims.y, false, SurfaceChannelOrder::RGB);
 }
 
 void GPUPointCloudApp::setupDSAPI()
@@ -139,6 +138,7 @@ void GPUPointCloudApp::setupDSAPI()
 		quit();
 	}
 
+	mDepthDims = mCinderDS->getDepthSize();
 	mCinderDS->start();
 }
 
@@ -156,9 +156,9 @@ void GPUPointCloudApp::update()
 {
 	if (mCinderDS->update())
 	{
-		const uint16_t* cDepth = mCinderDS->getDepthFrame().getData();
+		Channel16u cDepth = mCinderDS->getDepthFrame();
 		Surface8u::Iter cIter = mSurfDepth.getIter();
-		int id = 0;
+
 		while (cIter.line())
 		{
 			while (cIter.pixel())
@@ -167,10 +167,10 @@ void GPUPointCloudApp::update()
 				cIter.g() = 0;
 				cIter.b() = 0;
 
-				float cVal = (float)cDepth[id];
+				float cVal = (float)*cDepth.getData(cIter.x(), cIter.y());
 				if (cVal > 100 && cVal < 1000)
 					cIter.r() = (uint8_t)lmap<float>(cVal, 100, 1000, 255, 0);
-				id++;
+
 			}
 		}
 		mTexDepth->update(mSurfDepth);

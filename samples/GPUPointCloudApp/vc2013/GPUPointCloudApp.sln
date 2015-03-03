@@ -1,7 +1,7 @@
 
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GPUPointCloud", "GPUPointCloud.vcxproj", "{B540943D-87F3-4DCF-B7B1-483EEA333E3F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GPUPointCloudApp", "GPUPointCloudApp.vcxproj", "{B540943D-87F3-4DCF-B7B1-483EEA333E3F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
