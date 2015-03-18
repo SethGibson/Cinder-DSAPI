@@ -4,7 +4,7 @@
 #pragma comment(lib, "DSAPI32.lib")
 #endif
 
-#include "cinder/app/AppNative.h"
+#include "cinder/app/App.h"
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
 #include "cinder/gl/Batch.h"
@@ -19,7 +19,7 @@ using namespace ci::app;
 using namespace std;
 using namespace CinderDS;
 
-class GPUPointCloudApp : public AppNative
+class GPUPointCloudApp : public App
 {
 public:
 	void setup() override;
@@ -68,7 +68,7 @@ void GPUPointCloudApp::setup()
 	setupDSAPI();
 	setupMesh();
 
-	getSignalShutdown().connect(std::bind(&GPUPointCloudApp::stopDS, this));
+	getSignalCleanup().connect(std::bind(&GPUPointCloudApp::stopDS, this));
 }
 
 void GPUPointCloudApp::setupMesh()
@@ -194,4 +194,4 @@ void GPUPointCloudApp::stopDS()
 	mCinderDS->stop();
 }
 
-CINDER_APP_NATIVE(GPUPointCloudApp, RendererGl)
+CINDER_APP(GPUPointCloudApp, RendererGl)

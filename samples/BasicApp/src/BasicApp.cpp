@@ -4,7 +4,7 @@
 #pragma comment(lib, "DSAPI32.lib")
 #endif
 
-#include "cinder/app/AppNative.h"
+#include "cinder/app/App.h"
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
 #include "cinder/gl/Texture.h"
@@ -15,7 +15,7 @@ using namespace ci::app;
 using namespace std;
 using namespace CinderDS;
 
-class BasicApp : public AppNative
+class BasicApp : public App
 {
 public:
 	void setup() override;
@@ -66,7 +66,7 @@ void BasicApp::setup()
 	mTexDepth = gl::Texture::create(mDepthDims.x, mDepthDims.y);
 
 	// setup our shutdown event
-	getSignalShutdown().connect(std::bind(&BasicApp::exit, this));
+	getSignalCleanup().connect(std::bind(&BasicApp::exit, this));
 
 	// Start streaming
 	mCinderDS->start();
@@ -125,4 +125,4 @@ void BasicApp::exit()
 	mCinderDS->stop();
 }
 
-CINDER_APP_NATIVE( BasicApp, RendererGl )
+CINDER_APP( BasicApp, RendererGl )

@@ -4,7 +4,7 @@
 #pragma comment(lib, "DSAPI32.lib")
 #endif
 
-#include "cinder/app/AppNative.h"
+#include "cinder/app/App.h"
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
 #include "cinder/gl/Batch.h"
@@ -19,7 +19,7 @@ using namespace ci::app;
 using namespace std;
 using namespace CinderDS;
 
-class PointCloudApp : public AppNative
+class PointCloudApp : public App
 {
 public:
 	void setup() override;
@@ -67,7 +67,7 @@ void PointCloudApp::setup()
 	setupDSAPI();
 	setupMesh();
 
-	getSignalShutdown().connect(std::bind(&PointCloudApp::exit, this));
+	getSignalCleanup().connect(std::bind(&PointCloudApp::exit, this));
 }
 
 void PointCloudApp::setupMesh()
@@ -139,7 +139,7 @@ void PointCloudApp::update()
 			if (cDepth > 100 && cDepth < 1000)
 			{
 				vec3 cPos = mCinderDS->getZCameraSpacePoint(vec3(dx, dy, cDepth));
-				vec2 cUV = mCinderDS->mapColorToDepth(static_cast<float>(dx),
+				vec2 cUV = mCinderDS->getColorSpaceCoords(static_cast<float>(dx),
 														static_cast<float>(dy),
 														cDepth);
 
@@ -171,4 +171,4 @@ void PointCloudApp::exit()
 	mCinderDS->stop();
 }
 
-CINDER_APP_NATIVE( PointCloudApp, RendererGl )
+CINDER_APP( PointCloudApp, RendererGl )
