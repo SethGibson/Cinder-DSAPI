@@ -278,7 +278,10 @@ namespace CinderDS
 	const Color CinderDSAPI::getDepthSpaceColor(float pX, float pY, float pZ)
 	{
 		vec3 cZCamera = getZCameraSpacePoint(pX, pY, pZ);
-		return getColorFromZCamera(cZCamera.x, cZCamera.y, cZCamera.z);
+		if (cZCamera.z > 0)
+			return getColorFromZCamera(cZCamera.x, cZCamera.y, cZCamera.z);
+		else
+			return Color::black();
 	}
 
 	const vec2 CinderDSAPI::getColorSpaceCoords(float pX, float pY, float pZ)
