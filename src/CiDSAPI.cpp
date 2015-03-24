@@ -270,12 +270,12 @@ namespace CinderDS
 		return getZCameraSpacePoint(pPoint.x, pPoint.y, pPoint.z);
 	}
 
-	const Color CinderDSAPI::getDepthSpaceColor(vec3 pPoint)
+	const Color CinderDSAPI::getColorFromZImage(vec3 pPoint)
 	{
-		return getDepthSpaceColor(pPoint.x, pPoint.y, pPoint.z);
+		return getColorFromZImage(pPoint.x, pPoint.y, pPoint.z);
 	}
 
-	const Color CinderDSAPI::getDepthSpaceColor(float pX, float pY, float pZ)
+	const Color CinderDSAPI::getColorFromZImage(float pX, float pY, float pZ)
 	{
 		vec3 cZCamera = getZCameraSpacePoint(pX, pY, pZ);
 		if (cZCamera.z > 0)
@@ -284,13 +284,17 @@ namespace CinderDS
 			return Color::black();
 	}
 
-	const vec2 CinderDSAPI::getColorSpaceCoords(float pX, float pY, float pZ)
+	const vec2 CinderDSAPI::getColorSpaceCoordsFromZImage(float pX, float pY, float pZ)
 	{
-		float cZImage[3]{ pX, pY, pZ };
-		float cZCamera[3]{0};
+		vec3 cZCamera = getZCameraSpacePoint(pX, pY, pZ);
+		return getColorSpaceCoordsFromZCamera(cZCamera);
+	}
+
+	const vec2 CinderDSAPI::getColorSpaceCoordsFromZCamera(vec3 pPoint)
+	{
+		float cZCamera[3]{ pPoint.x, pPoint.y, pPoint.z };
 		float cRgbCamera[3]{0};
 		float cRgbImage[2]{0};
-		DSTransformFromZImageToZCamera(mZIntrinsics, cZImage, cZCamera);
 		DSTransformFromZCameraToRectThirdCamera(mZToRgb, cZCamera, cRgbCamera);
 		DSTransformFromThirdCameraToRectThirdImage(mRgbIntrinsics, cRgbCamera, cRgbImage);
 
@@ -298,6 +302,7 @@ namespace CinderDS
 		float cv = static_cast<int>(cRgbImage[1]) / (float)mRgbHeight;
 
 		return vec2(cu, cv);
+
 	}
 	const Color CinderDSAPI::getColorFromZCamera(float pX, float pY, float pZ)
 	{

@@ -29,8 +29,9 @@ namespace CinderDS
 		DS_BOTH = DSWhichImager::DS_BOTH_IMAGERS
 	};
 
+	//Index, Serial Number
 	typedef pair<int, uint32_t> camera_type;
-	static vector<camera_type> GetCameraList();
+	vector<camera_type> GetCameraList();
 
 	class CinderDSAPI;
 	typedef std::shared_ptr<DSAPI> DSAPIRef;
@@ -68,15 +69,19 @@ namespace CinderDS
 		const vec3 getZCameraSpacePoint(vec3 pPoint);
 
 		//get a Color object from depth image coords (image x, image y, depth)
-		const Color getDepthSpaceColor(float pX, float pY, float pZ);		
-		const Color getDepthSpaceColor(int pX, int pY, uint16_t pZ);		
-		const Color getDepthSpaceColor(vec3 pPoint);						
+		const Color getColorFromZImage(float pX, float pY, float pZ);		
+		const Color getColorFromZImage(int pX, int pY, uint16_t pZ);
+		const Color getColorFromZImage(vec3 pPoint);
 
 		//get a Color object from camera space coords (camera x, camera y, camera z)
 		const Color getColorFromZCamera(float pX, float pY, float pZ);		
 		const Color getColorFromZCamera(vec3 pPoint);
 
-		const vec2 getColorSpaceCoords(float pX, float pY, float pZ);
+		//get color space UVs from depth image coords
+		const vec2 getColorSpaceCoordsFromZImage(float pX, float pY, float pZ);
+
+		//get color space UVs from depth camera coords
+		const vec2 getColorSpaceCoordsFromZCamera(vec3 pPoint);
 
 		int getDepthWidth(){ return mLRZWidth; }
 		int getDepthHeight(){ return mLRZHeight; }
