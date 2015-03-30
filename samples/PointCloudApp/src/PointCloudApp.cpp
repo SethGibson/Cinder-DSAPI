@@ -139,7 +139,7 @@ void PointCloudApp::update()
 			if (cDepth > 100 && cDepth < 1000)
 			{
 				vec3 cPos = mCinderDS->getZCameraSpacePoint(vec3(dx, dy, cDepth));
-				vec2 cUV = mCinderDS->getColorSpaceCoords(static_cast<float>(dx),
+				vec2 cUV = mCinderDS->getColorSpaceCoordsFromZImage(static_cast<float>(dx),
 														static_cast<float>(dy),
 														cDepth);
 
