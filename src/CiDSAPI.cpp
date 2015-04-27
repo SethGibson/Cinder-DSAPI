@@ -4,6 +4,18 @@ using namespace std;
 
 namespace CinderDS
 {
+	CinderDSAPI::CinderDSAPI() : mHasValidConfig(false), mHasValidCalib(false),
+		mHasRgb(false), mHasDepth(false),
+		mHasLeft(false), mHasRight(false),
+		mIsInit(false), mUpdated(false),
+		mLRZWidth(0), mLRZHeight(0), mRgbWidth(0), mRgbHeight(0), mDSAPI(nullptr){}
+
+	CinderDSAPI::~CinderDSAPI(){}
+	CinderDSRef CinderDSAPI::create()
+	{
+		return CinderDSRef(new CinderDSAPI());
+	}
+#ifndef DSAPI_VER_19
 	vector<camera_type> GetCameraList()
 	{
 		vector<camera_type> cCameraList;
@@ -14,27 +26,6 @@ namespace CinderDS
 		}
 
 		return cCameraList;
-	}
-
-	CinderDSRef CinderDSAPI::create()
-	{
-		return CinderDSRef(new CinderDSAPI());
-	}
-
-	CinderDSAPI::CinderDSAPI() : mHasValidConfig(false), mHasValidCalib(false),
-									mHasRgb(false), mHasDepth(false),
-									mHasLeft(false), mHasRight(false),
-									mIsInit(false), mUpdated(false),
-									mLRZWidth(0), mLRZHeight(0), mRgbWidth(0), mRgbHeight(0), mDSAPI(nullptr){}
-
-	CinderDSAPI::~CinderDSAPI(){}
-
-	bool CinderDSAPI::init()
-	{
-		if (mDSAPI == nullptr)
-			mDSAPI = DSAPIRef(DSCreate(DS_DS4_PLATFORM), DSDestroy);
-
-		return open();
 	}
 
 	bool CinderDSAPI::init(uint32_t pSerialNo)
@@ -52,6 +43,15 @@ namespace CinderDS
 			mIsInit = mHasValidConfig&&mHasValidCalib;
 		}
 		return mIsInit;
+	}
+#endif
+
+	bool CinderDSAPI::init()
+	{
+		if (mDSAPI == nullptr)
+			mDSAPI = DSAPIRef(DSCreate(DS_DS4_PLATFORM), DSDestroy);
+
+		return open();
 	}
 
 	bool CinderDSAPI::initForAlignment()
@@ -251,7 +251,7 @@ namespace CinderDS
 		}
 	}*/
 
-	const vec3 CinderDSAPI::getZCameraSpacePoint(float pX, float pY, float pZ)
+	const vec3 CinderDSAPI::getDepthSpacePoint(float pX, float pY, float pZ)
 	{
 		float cZImage[3]{ pX, pY, pZ };
 		float cZCamera[3]{0};
@@ -260,37 +260,37 @@ namespace CinderDS
 		return vec3(cZCamera[0], cZCamera[1], cZCamera[2]);
 	}
 
-	const vec3 CinderDSAPI::getZCameraSpacePoint(int pX, int pY, uint16_t pZ)
+	const vec3 CinderDSAPI::getDepthSpacePoint(int pX, int pY, uint16_t pZ)
 	{
-		return getZCameraSpacePoint(static_cast<float>(pX), static_cast<float>(pY), static_cast<float>(pZ));
+		return getDepthSpacePoint(static_cast<float>(pX), static_cast<float>(pY), static_cast<float>(pZ));
 	}
 
-	const vec3 CinderDSAPI::getZCameraSpacePoint(vec3 pPoint)
+	const vec3 CinderDSAPI::getDepthSpacePoint(vec3 pPoint)
 	{
-		return getZCameraSpacePoint(pPoint.x, pPoint.y, pPoint.z);
+		return getDepthSpacePoint(pPoint.x, pPoint.y, pPoint.z);
 	}
 
-	const Color CinderDSAPI::getColorFromZImage(vec3 pPoint)
+	const Color CinderDSAPI::getColorFromDepthImage(vec3 pPoint)
 	{
-		return getColorFromZImage(pPoint.x, pPoint.y, pPoint.z);
+		return getColorFromDepthImage(pPoint.x, pPoint.y, pPoint.z);
 	}
 
-	const Color CinderDSAPI::getColorFromZImage(float pX, float pY, float pZ)
+	const Color CinderDSAPI::getColorFromDepthImage(float pX, float pY, float pZ)
 	{
-		vec3 cZCamera = getZCameraSpacePoint(pX, pY, pZ);
+		vec3 cZCamera = getDepthSpacePoint(pX, pY, pZ);
 		if (cZCamera.z > 0)
-			return getColorFromZCamera(cZCamera.x, cZCamera.y, cZCamera.z);
+			return getColorFromDepthSpace(cZCamera.x, cZCamera.y, cZCamera.z);
 		else
 			return Color::black();
 	}
 
-	const vec2 CinderDSAPI::getColorSpaceCoordsFromZImage(float pX, float pY, float pZ)
+	const vec2 CinderDSAPI::getColorCoordsFromDepthImage(float pX, float pY, float pZ)
 	{
-		vec3 cZCamera = getZCameraSpacePoint(pX, pY, pZ);
-		return getColorSpaceCoordsFromZCamera(cZCamera);
+		vec3 cZCamera = getDepthSpacePoint(pX, pY, pZ);
+		return getColorCoordsFromDepthSpace(cZCamera);
 	}
 
-	const vec2 CinderDSAPI::getColorSpaceCoordsFromZCamera(vec3 pPoint)
+	const vec2 CinderDSAPI::getColorCoordsFromDepthSpace(vec3 pPoint)
 	{
 		float cZCamera[3]{ pPoint.x, pPoint.y, pPoint.z };
 		float cRgbCamera[3]{0};
@@ -304,7 +304,7 @@ namespace CinderDS
 		return vec2(cu, cv);
 
 	}
-	const Color CinderDSAPI::getColorFromZCamera(float pX, float pY, float pZ)
+	const Color CinderDSAPI::getColorFromDepthSpace(float pX, float pY, float pZ)
 	{
 		float cZCamera[3]{pX, pY, pZ};
 		float cRgbCamera[3]{0};
@@ -325,9 +325,9 @@ namespace CinderDS
 		return Color(cColor.r, cColor.g, cColor.b);
 	}
 
-	const Color CinderDSAPI::getColorFromZCamera(vec3 pPoint)
+	const Color CinderDSAPI::getColorFromDepthSpace(vec3 pPoint)
 	{
-		return getColorFromZCamera(pPoint.x, pPoint.y, pPoint.z);
+		return getColorFromDepthSpace(pPoint.x, pPoint.y, pPoint.z);
 	}
 
 	const vec2 CinderDSAPI::getDepthFOVs()

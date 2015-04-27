@@ -1,7 +1,7 @@
 #ifdef _DEBUG
-#pragma comment(lib, "DSAPI32.dbg.lib")
+#pragma comment(lib, "DSAPI.dbg.lib")
 #else
-#pragma comment(lib, "DSAPI32.lib")
+#pragma comment(lib, "DSAPI.lib")
 #endif
 
 #include "cinder/app/App.h"

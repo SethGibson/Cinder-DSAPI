@@ -31,8 +31,9 @@ namespace CinderDS
 
 	//Index, Serial Number
 	typedef pair<int, uint32_t> camera_type;
+#ifndef DSAPI_VER_19
 	vector<camera_type> GetCameraList();
-
+#endif
 	class CinderDSAPI;
 	typedef std::shared_ptr<DSAPI> DSAPIRef;
 	typedef std::shared_ptr<CinderDSAPI> CinderDSRef;
@@ -46,7 +47,9 @@ namespace CinderDS
 		~CinderDSAPI();
 
 		bool init();
+#ifndef DSAPI_VER_19
 		bool init(uint32_t pSerialNo);
+#endif
 		bool initForAlignment();
 		bool initRgb(const FrameSize &pRes, const int &pFPS);
 		bool initDepth(const FrameSize &pRes, const int &pFPS);
@@ -64,24 +67,24 @@ namespace CinderDS
 		//const Surface32f& mapDepthToCameraTable();
 
 		// get a 3d point from depth image coords (image x, image y, depth)
-		const vec3 getZCameraSpacePoint(float pX, float pY, float pZ);
-		const vec3 getZCameraSpacePoint(int pX, int pY, uint16_t pZ);
-		const vec3 getZCameraSpacePoint(vec3 pPoint);
+		const vec3 getDepthSpacePoint(float pX, float pY, float pZ);
+		const vec3 getDepthSpacePoint(int pX, int pY, uint16_t pZ);
+		const vec3 getDepthSpacePoint(vec3 pPoint);
 
 		//get a Color object from depth image coords (image x, image y, depth)
-		const Color getColorFromZImage(float pX, float pY, float pZ);		
-		const Color getColorFromZImage(int pX, int pY, uint16_t pZ);
-		const Color getColorFromZImage(vec3 pPoint);
+		const Color getColorFromDepthImage(float pX, float pY, float pZ);		
+		const Color getColorFromDepthImage(int pX, int pY, uint16_t pZ);
+		const Color getColorFromDepthImage(vec3 pPoint);
 
 		//get a Color object from camera space coords (camera x, camera y, camera z)
-		const Color getColorFromZCamera(float pX, float pY, float pZ);		
-		const Color getColorFromZCamera(vec3 pPoint);
+		const Color getColorFromDepthSpace(float pX, float pY, float pZ);		
+		const Color getColorFromDepthSpace(vec3 pPoint);
 
 		//get color space UVs from depth image coords
-		const vec2 getColorSpaceCoordsFromZImage(float pX, float pY, float pZ);
+		const vec2 getColorCoordsFromDepthImage(float pX, float pY, float pZ);
 
 		//get color space UVs from depth camera coords
-		const vec2 getColorSpaceCoordsFromZCamera(vec3 pPoint);
+		const vec2 getColorCoordsFromDepthSpace(vec3 pPoint);
 
 		int getDepthWidth(){ return mLRZWidth; }
 		int getDepthHeight(){ return mLRZHeight; }
