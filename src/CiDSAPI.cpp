@@ -218,7 +218,7 @@ namespace CinderDS
 				};
 
 				float cRgb[2]{0};
-				DSTransformFromZImageToRectThirdImage(mZIntrinsics, mZToRgb, mRgbIntrinsics, cZ, cRgb);
+				DSTransformFromZImageToRectOtherImage(mZIntrinsics, mZToRgb, mRgbIntrinsics, cZ, cRgb);
 				mDepthToColor.push_back(ivec2((int)cRgb[0], (int)cRgb[1]));
 			}
 		}
@@ -295,8 +295,8 @@ namespace CinderDS
 		float cZCamera[3]{ pPoint.x, pPoint.y, pPoint.z };
 		float cRgbCamera[3]{0};
 		float cRgbImage[2]{0};
-		DSTransformFromZCameraToRectThirdCamera(mZToRgb, cZCamera, cRgbCamera);
-		DSTransformFromThirdCameraToRectThirdImage(mRgbIntrinsics, cRgbCamera, cRgbImage);
+		DSTransformFromZCameraToRectOtherCamera(mZToRgb, cZCamera, cRgbCamera);
+		DSTransformFromOtherCameraToRectOtherImage(mRgbIntrinsics, cRgbCamera, cRgbImage);
 
 		float cu = static_cast<int>(cRgbImage[0]) / (float)mRgbWidth;
 		float cv = static_cast<int>(cRgbImage[1]) / (float)mRgbHeight;
@@ -309,8 +309,8 @@ namespace CinderDS
 		float cZCamera[3]{pX, pY, pZ};
 		float cRgbCamera[3]{0};
 		float cRgbImage[2]{0};
-		DSTransformFromZCameraToRectThirdCamera(mZToRgb, cZCamera, cRgbCamera);
-		DSTransformFromThirdCameraToRectThirdImage(mRgbIntrinsics, cRgbCamera, cRgbImage);
+		DSTransformFromZCameraToRectOtherCamera(mZToRgb, cZCamera, cRgbCamera);
+		DSTransformFromOtherCameraToRectOtherImage(mRgbIntrinsics, cRgbCamera, cRgbImage);
 
 		/*
 		mRgbIter = mRgbFrame.getIter();
