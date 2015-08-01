@@ -15,7 +15,7 @@ namespace CinderDS
 	{
 		return CinderDSRef(new CinderDSAPI());
 	}
-#ifndef DSAPI_VER_19
+
 	vector<camera_type> GetCameraList()
 	{
 		vector<camera_type> cCameraList;
@@ -44,7 +44,6 @@ namespace CinderDS
 		}
 		return mIsInit;
 	}
-#endif
 
 	bool CinderDSAPI::init()
 	{
@@ -311,14 +310,6 @@ namespace CinderDS
 		float cRgbImage[2]{0};
 		DSTransformFromZCameraToRectOtherCamera(mZToRgb, cZCamera, cRgbCamera);
 		DSTransformFromOtherCameraToRectOtherImage(mRgbIntrinsics, cRgbCamera, cRgbImage);
-
-		/*
-		mRgbIter = mRgbFrame.getIter();
-		float cR = mRgbIter.r((int)cRgbImage[0], (int)cRgbImage[1]) / 255.0f;
-		float cG = mRgbIter.g((int)cRgbImage[0], (int)cRgbImage[1]) / 255.0f;
-		float cB = mRgbIter.b((int)cRgbImage[0], (int)cRgbImage[1]) / 255.0f;
-		return Color(cR, cG, cB);
-		*/
 
 		ivec2 cPos(static_cast<int>(cRgbImage[0]), static_cast<int>(cRgbImage[1]));
 		ColorA cColor = mRgbFrame.getPixel(cPos);

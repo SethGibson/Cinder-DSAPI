@@ -1,5 +1,10 @@
 #ifndef __CI_DSAPI__
 #define __CI_DSAPI__
+#ifdef _DEBUG
+#pragma comment(lib, "DSAPI.dbg.lib")
+#else
+#pragma comment(lib, "DSAPI.lib")
+#endif
 #include <memory>
 #include "DSAPI.h"
 #include "DSAPIUtil.h"
@@ -31,9 +36,8 @@ namespace CinderDS
 
 	//Index, Serial Number
 	typedef pair<int, uint32_t> camera_type;
-#ifndef DSAPI_VER_19
 	vector<camera_type> GetCameraList();
-#endif
+
 	class CinderDSAPI;
 	typedef std::shared_ptr<DSAPI> DSAPIRef;
 	typedef std::shared_ptr<CinderDSAPI> CinderDSRef;
