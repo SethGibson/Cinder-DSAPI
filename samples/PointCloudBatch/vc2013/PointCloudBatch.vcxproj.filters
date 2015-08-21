@@ -24,10 +24,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\PointCloudApp.cpp">
+    <ClCompile Include="..\src\PointCloudBatch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\PointCloudApp.cpp">
+    <ClCompile Include="..\src\PointCloudBatch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClInclude Include="..\include\Resources.h">
@@ -51,10 +51,10 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\assets\pointcloud_vert.glsl">
+    <None Include="..\assets\pointcloud.frag">
       <Filter>Source Files\shaders</Filter>
     </None>
-    <None Include="..\assets\pointcloud_frag.glsl">
+    <None Include="..\assets\pointcloud.vert">
       <Filter>Source Files\shaders</Filter>
     </None>
   </ItemGroup>

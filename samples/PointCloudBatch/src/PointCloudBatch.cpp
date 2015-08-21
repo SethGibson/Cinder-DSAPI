@@ -1,9 +1,3 @@
-#ifdef _DEBUG
-#pragma comment(lib, "DSAPI32.dbg.lib")
-#else
-#pragma comment(lib, "DSAPI32.lib")
-#endif
-
 #include "cinder/app/App.h"
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
@@ -11,7 +5,8 @@
 #include "cinder/gl/GlslProg.h"
 #include "cinder/gl/Texture.h"
 #include "cinder/Camera.h"
-#include "cinder/MayaCamUI.h"
+#include "cinder/CameraUi.h"
+#include "cinder/params/Params.h"
 #include "CiDSAPI.h"
 
 using namespace ci;
@@ -19,16 +14,13 @@ using namespace ci::app;
 using namespace std;
 using namespace CinderDS;
 
-class PointCloudApp : public App
+class PointCloudBatch : public App
 {
 public:
 	void setup() override;
-	void mouseDown( MouseEvent event ) override;
-	void mouseDrag(MouseEvent event) override;
 	void update() override;
 	void draw() override;
-
-	void exit();
+	void cleanup() override;
 
 	struct CloudPoint
 	{
@@ -40,6 +32,7 @@ public:
 private:
 	void setupMesh();
 	void setupDSAPI();
+	void setupGUI();
 
 	gl::VboRef mBufferObj;
 	geom::BufferLayout mAttribObj;
@@ -48,33 +41,50 @@ private:
 	gl::GlslProgRef mShaderObj;
 	gl::Texture2dRef mTexRgb;
 
-	CameraPersp mCamera;
-	MayaCamUI mMayaCam;
+	CameraPersp mView;
+	CameraUi mViewCtrl;
 
 	CinderDSRef mCinderDS;
 	ivec2 mDepthDims, mRgbDims;
 	vector<CloudPoint> mPoints;
+
+	params::InterfaceGlRef	mGUI;
+	float					mParamMinDepth,
+							mParamMaxDepth,
+							mParamPointSize;
 };
 
-void PointCloudApp::setup()
+void PointCloudBatch::setup()
 {
+	setupGUI();
+
 	getWindow()->setSize(1280, 720);
-	mCamera.setPerspective(45.0f, getWindowAspectRatio(), 100.0f, 2000.0f);
-	mCamera.lookAt(vec3(0, 0, 0), vec3(0,0,1), vec3(0, -1, 0));
-	mCamera.setCenterOfInterestPoint(vec3(0,0,750.0));
-	mMayaCam.setCurrentCam(mCamera);
+	mView.setPerspective(45.0f, getWindowAspectRatio(), 100.0f, 2000.0f);
+	mView.lookAt(vec3(0, 0, 0), vec3(0,0,1), vec3(0, -1, 0));
+	mView.setPivotDistance(750.0f);
+	mViewCtrl = CameraUi(&mView, getWindow());
 
 	setupDSAPI();
 	setupMesh();
-
-	getSignalCleanup().connect(std::bind(&PointCloudApp::exit, this));
 }
 
-void PointCloudApp::setupMesh()
+void PointCloudBatch::setupGUI()
+{
+	mParamMinDepth = 100.0f;
+	mParamMaxDepth = 1000.0f;
+	mParamPointSize = 4.0f;
+	mGUI = params::InterfaceGl::create("Settings", ivec2(300, 100));
+	mGUI->addSeparator();
+	mGUI->addParam<float>("paramMinDepth", &mParamMinDepth).optionsStr("label='Min Depth'");
+	mGUI->addParam<float>("paramMaxDepth", &mParamMaxDepth).optionsStr("label='Max Depth'");
+	mGUI->addParam<float>("paramPointSize", &mParamPointSize).optionsStr("label='Point Size'");
+}
+
+void PointCloudBatch::setupMesh()
 {
 	try
 	{
-		mShaderObj = gl::GlslProg::create(loadAsset("pointcloud_vert.glsl"), loadAsset("pointcloud_frag.glsl"));
+		mShaderObj = gl::GlslProg::create(loadAsset("pointcloud.vert"), loadAsset("pointcloud.frag"));
 	}
 	catch (const gl::GlslProgExc &e)
 	{
@@ -98,9 +108,11 @@ void PointCloudApp::setupMesh()
 	mDrawObj = gl::Batch::create(mMeshObj, mShaderObj);
 
 	mTexRgb = gl::Texture2d::create(mRgbDims.x, mRgbDims.y);
+
+	gl::enable(GL_PROGRAM_POINT_SIZE);
 }
 
-void PointCloudApp::setupDSAPI()
+void PointCloudBatch::setupDSAPI()
 {
 	mCinderDS = CinderDSAPI::create();
 	
@@ -114,61 +126,52 @@ void PointCloudApp::setupDSAPI()
 	mCinderDS->start();
 }
 
-void PointCloudApp::mouseDown( MouseEvent event )
-{
-	mMayaCam.mouseDown(event.getPos());
-}
-
-void PointCloudApp::mouseDrag(MouseEvent event)
-{
-	mMayaCam.mouseDrag(event.getPos(), event.isLeftDown(), false, event.isRightDown());
-}
-
-void PointCloudApp::update()
+void PointCloudBatch::update()
 {
 	mCinderDS->update();
+	mTexRgb->update(*mCinderDS->getRgbFrame());
+
 	mPoints.clear();
-	Channel16u cChanDepth = mCinderDS->getDepthFrame();
+	auto depthChannel = mCinderDS->getDepthFrame();
+	auto iter = depthChannel->getIter();
 
-	mTexRgb->update(mCinderDS->getRgbFrame());
-	for (int dy = 0; dy < mDepthDims.y; ++dy)
+	while (iter.line())
 	{
-		for (int dx = 0; dx < mDepthDims.x; ++dx)
+		while (iter.pixel())
 		{
-			float cDepth = (float)*cChanDepth.getData(dx, dy);
-			if (cDepth > 100 && cDepth < 1000)
+			float depthValue = (float)*depthChannel->getData(iter.x(), iter.y());
+			if (depthValue > mParamMinDepth && depthValue < mParamMaxDepth)
 			{
-				vec3 cPos = mCinderDS->getZCameraSpacePoint(vec3(dx, dy, cDepth));
-				vec2 cUV = mCinderDS->getColorSpaceCoordsFromZImage(static_cast<float>(dx),
-														static_cast<float>(dy),
-														cDepth);
+				vec3 pos(static_cast<float>(iter.x()), static_cast<float>(iter.y()), depthValue);
+				vec3 world = mCinderDS->getDepthSpacePoint(pos);
+				vec2 uv = mCinderDS->getColorCoordsFromDepthSpace(world);
 
-				mPoints.push_back(CloudPoint(cPos, cUV));
+				mPoints.push_back(CloudPoint(world, uv));
 			}
 		}
 	}
 
 	mBufferObj->bufferData(mPoints.size()*sizeof(CloudPoint), mPoints.data(), GL_DYNAMIC_DRAW);
-	mMeshObj = gl::VboMesh::create(mPoints.size(), GL_POINTS, { { mAttribObj, mBufferObj } });
-	mDrawObj->replaceVboMesh(mMeshObj);
 }
 
-void PointCloudApp::draw()
+void PointCloudBatch::draw()
 {
 	gl::clear( Color( 0.25f, 0.1f, 0.15f ) ); 
 	gl::enableAdditiveBlending();
 	gl::enableDepthRead();
-	gl::enableDepthWrite();
-	gl::setMatrices(mMayaCam.getCamera());
+	gl::setMatrices(mView);
 
 	gl::ScopedTextureBind cTexture(mTexRgb);
-	gl::pointSize(2.0f);
+	mDrawObj->getGlslProg()->uniform("u_PointSize", mParamPointSize);
 	mDrawObj->draw();
+
+	gl::setMatricesWindow(getWindowSize());
+	mGUI->draw();
 }
 
-void PointCloudApp::exit()
+void PointCloudBatch::cleanup()
 {
 	mCinderDS->stop();
 }
 
-CINDER_APP( PointCloudApp, RendererGl )
+CINDER_APP( PointCloudBatch, RendererGl )
