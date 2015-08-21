@@ -53,26 +53,6 @@ namespace CinderDS
 		return open();
 	}
 
-	bool CinderDSAPI::initForAlignment()
-	{
-		mDSAPI->accessThird()->enableThird(true);
-
-
-		mDSAPI->accessEmitter()->enableEmitter(true);
-
-
-		mDSAPI->enableLRCrop(true);
-		mDSAPI->enableLeft(false);
-		mDSAPI->enableRight(false);
-		mDSAPI->enableZ(true);
-
-
-		if (!mDSAPI->setLRZResolutionMode(true, 480, 360, 30, DS_LUMINANCE8)) return false;
-		if (!mDSAPI->accessThird()->setThirdResolutionMode(true, 640, 480, 30, DS_RGB8)) return false;
-
-		return true;
-	}
-
 	bool CinderDSAPI::initRgb(const FrameSize &pRes, const int &pFPS)
 	{
 		ivec2 cSize;
@@ -88,7 +68,7 @@ namespace CinderDS
 					{
 						mRgbWidth = cSize.x;
 						mRgbHeight = cSize.y;
-						mRgbFrame = Surface8u(mRgbWidth, mRgbHeight, false, SurfaceChannelOrder::RGB);
+						mRgbFrame = Surface8u::create(mRgbWidth, mRgbHeight, false, SurfaceChannelOrder::RGB);
 						mDSRGB->getCalibIntrinsicsRectThird(mRgbIntrinsics);
 						mDSRGB->getCalibExtrinsicsZToRectThird(mZToRgb);
 					}
@@ -110,7 +90,7 @@ namespace CinderDS
 				{
 					mLRZWidth = cSize.x;
 					mLRZHeight = cSize.y;
-					mDepthFrame = Channel16u(mLRZWidth, mLRZHeight);
+					mDepthFrame = Channel16u::create(mLRZWidth, mLRZHeight);
 					mDSAPI->getCalibIntrinsicsZ(mZIntrinsics);
 				}
 			}
@@ -118,7 +98,7 @@ namespace CinderDS
 		return mHasDepth;
 	}
 
-	bool CinderDSAPI::initStereo(const FrameSize &pRes, const int &pFPS, const StereoCam &pWhich)
+	bool CinderDSAPI::initStereo(const FrameSize &pRes, const int &pFPS, const StereoCam &pWhich, const bool &pCrop)
 	{
 		ivec2 cSize;
 		if (setupStream(pRes, cSize))
@@ -138,6 +118,8 @@ namespace CinderDS
 				mHasRight = mDSAPI->enableRight(true);
 				cModeSet = mDSAPI->setLRZResolutionMode(true, cSize.x, cSize.y, pFPS, DS_LUMINANCE8);
 			}
+
+			mDSAPI->enableLRCrop(pCrop);
 
 			switch (pWhich)
 			{
@@ -165,13 +147,13 @@ namespace CinderDS
 		if (retVal)
 		{
 			if (mHasRgb)
-				mRgbFrame = Surface8u((uint8_t *)mDSRGB->getThirdImage(), mRgbWidth, mRgbHeight, mRgbWidth * 3, SurfaceChannelOrder::RGB);
+				mRgbFrame = Surface8u::create((uint8_t *)mDSRGB->getThirdImage(), mRgbWidth, mRgbHeight, mRgbWidth * 3, SurfaceChannelOrder::RGB);
 			if (mHasDepth)
-				mDepthFrame = Channel16u(mLRZWidth, mLRZHeight, int32_t(mLRZWidth*sizeof(uint16_t)), 1, mDSAPI->getZImage());
+				mDepthFrame = Channel16u::create(mLRZWidth, mLRZHeight, int32_t(mLRZWidth*sizeof(uint16_t)), 1, mDSAPI->getZImage());
 			if (mHasLeft)
-				mLeftFrame = Channel8u(mLRZWidth, mLRZHeight, mLRZWidth, 1, (uint8_t *)mDSAPI->getLImage());
+				mLeftFrame = Channel8u::create(mLRZWidth, mLRZHeight, mLRZWidth, 1, (uint8_t *)mDSAPI->getLImage());
 			if (mHasRight)
-				mRightFrame = Channel8u(mLRZWidth, mLRZHeight, mLRZWidth, 1, (uint8_t *)mDSAPI->getRImage());
+				mRightFrame = Channel8u::create(mLRZWidth, mLRZHeight, mLRZWidth, 1, (uint8_t *)mDSAPI->getRImage());
 		}
 		return retVal;;
 	}
@@ -183,22 +165,22 @@ namespace CinderDS
 		return false;
 	}
 
-	const Surface8u& CinderDSAPI::getRgbFrame()
+	const Surface8uRef CinderDSAPI::getRgbFrame()
 	{
 		return mRgbFrame;
 	}
 
-	const Channel8u& CinderDSAPI::getLeftFrame()
+	const Channel8uRef CinderDSAPI::getLeftFrame()
 	{
 		return mLeftFrame;
 	}
 
-	const Channel8u& CinderDSAPI::getRightFrame()
+	const Channel8uRef CinderDSAPI::getRightFrame()
 	{
 		return mRightFrame;
 	}
 
-	const Channel16u& CinderDSAPI::getDepthFrame()
+	const Channel16uRef CinderDSAPI::getDepthFrame()
 	{
 		return mDepthFrame;
 	}
@@ -206,7 +188,7 @@ namespace CinderDS
 	const vector<ivec2>& CinderDSAPI::mapDepthToColorFrame()
 	{
 		mDepthToColor.clear();
-		Channel16u::Iter cIter = mDepthFrame.getIter();
+		Channel16u::Iter cIter = mDepthFrame->getIter();
 		while (cIter.line())
 		{
 			while (cIter.pixel())
@@ -311,8 +293,16 @@ namespace CinderDS
 		DSTransformFromZCameraToRectOtherCamera(mZToRgb, cZCamera, cRgbCamera);
 		DSTransformFromOtherCameraToRectOtherImage(mRgbIntrinsics, cRgbCamera, cRgbImage);
 
+		/* TODO: Perf against this
+		mRgbIter = mRgbFrame.getIter();
+		float cR = mRgbIter.r((int)cRgbImage[0], (int)cRgbImage[1]) / 255.0f;
+		float cG = mRgbIter.g((int)cRgbImage[0], (int)cRgbImage[1]) / 255.0f;
+		float cB = mRgbIter.b((int)cRgbImage[0], (int)cRgbImage[1]) / 255.0f;
+		return Color(cR, cG, cB);
+		*/
+
 		ivec2 cPos(static_cast<int>(cRgbImage[0]), static_cast<int>(cRgbImage[1]));
-		ColorA cColor = mRgbFrame.getPixel(cPos);
+		ColorA cColor = mRgbFrame->getPixel(cPos);
 		return Color(cColor.r, cColor.g, cColor.b);
 	}
 
@@ -351,7 +341,8 @@ namespace CinderDS
 	}
 	const DSCalibIntrinsicsRectified CinderDSAPI::getRgbIntrinsics()
 	{
-		return mRgbIntrinsics;
+		if (mDSRGB)
+			return mRgbIntrinsics;
 	}
 
 	bool CinderDSAPI::open()
